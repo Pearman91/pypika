@@ -30,6 +30,6 @@ elif str_or_field == 'f':
     q = Query.from_(products).\
         select(products.productName, products.buyPrice).\
         where(products.buyPrice[18:65]).\
-        orderby('buyPrice', order=Order.desc).\
-        force_index(3, 2, 1)
+        orderby('buyPrice', order=Order.desc). \
+        force_index(products.PRIMARY, "productLine", products.idx_buyprice)
     get_result(q)
