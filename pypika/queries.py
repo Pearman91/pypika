@@ -440,7 +440,6 @@ class QueryBuilder(Selectable, Term):
 
         self._with = []
         self._selects = []
-        self._force_indexes = []
         self._columns = []
         self._values = []
         self._distinct = False
@@ -624,16 +623,6 @@ class QueryBuilder(Selectable, Term):
         else:
             self._validate_terms_and_append(*terms)
         self._replace = True
-
-    @builder
-    def force_index(self, *terms):
-        for term in terms:
-            if isinstance(term, Field):
-                self._force_indexes.append(term)
-            elif isinstance(term, str):
-                self._force_indexes.append(Field(term, table=self._from[0]))
-        if len(self._force_indexes) == 0:
-            raise TypeError("No proper index provided for FORCE INDEX.")
 
     @builder
     def distinct(self):
@@ -965,9 +954,6 @@ class QueryBuilder(Selectable, Term):
         if self._from:
             querystring += self._from_sql(**kwargs)
 
-        if self._force_indexes:
-            querystring += self._force_index_sql(**kwargs)
-
         if self._joins:
             querystring += " " + " ".join(join.get_sql(**kwargs)
                                           for join in self._joins)
@@ -1068,12 +1054,6 @@ class QueryBuilder(Selectable, Term):
               clause.get_sql(subquery=True, with_alias=True, **kwargs)
               for clause in self._from
         ))
-
-    def _force_index_sql(self, **kwargs):
-        return ' FORCE INDEX({indexes})'.format(indexes=','.join(
-            index.get_sql(with_alias=True, subquery=True, **kwargs)
-            for index in self._force_indexes),
-        )
 
     def _prewhere_sql(self, quote_char=None, **kwargs):
         return ' PREWHERE {prewhere}'.format(
